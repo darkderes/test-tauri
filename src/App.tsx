@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
 import Auth from "./components/Auth";
+import Profile from "./components/Profile";
 import "./App.css";
 
 function App() {
@@ -46,15 +47,10 @@ function App() {
       <span className="badge">App de prueba</span>
       <h1>Bienvenido</h1>
       <p className="subtitle">Sesión iniciada como {session.user.email}</p>
-      <div className="platforms">
-        <span className="platform-pill">🐧 Ubuntu</span>
-        <span className="platform-pill">🪟 Windows 11</span>
-      </div>
-      <button onClick={() => supabase.auth.signOut()}>Cerrar sesión</button>
-      <p className="note">
-        Esta página es solo para fines de prueba y desarrollo, no representa
-        una versión final del producto.
-      </p>
+      <Profile user={session.user} />
+      <button className="signout" onClick={() => supabase.auth.signOut()}>
+        Cerrar sesión
+      </button>
     </main>
   );
 }
