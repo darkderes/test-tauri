@@ -3,11 +3,15 @@ import { Session } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
 import Auth from "./components/Auth";
 import Profile from "./components/Profile";
+import MainMenu from "./components/MainMenu";
 import "./App.css";
+
+type View = "menu" | "profile";
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<View>("menu");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -45,9 +49,18 @@ function App() {
   return (
     <main className="container">
       <span className="badge">App de prueba</span>
-      <h1>Bienvenido</h1>
-      <p className="subtitle">Sesión iniciada como {session.user.email}</p>
-      <Profile user={session.user} />
+
+      {view === "menu" ? (
+        <MainMenu user={session.user} onEditProfile={() => setView("profile")} />
+      ) : (
+        <>
+          <button className="back-button" onClick={() => setView("menu")}>
+            ← Volver al menú
+          </button>
+          <Profile user={session.user} />
+        </>
+      )}
+
       <button className="signout" onClick={() => supabase.auth.signOut()}>
         Cerrar sesión
       </button>
