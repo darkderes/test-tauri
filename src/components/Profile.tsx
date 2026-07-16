@@ -1,7 +1,7 @@
 import { useRef, useState, FormEvent } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
-import { ProfileData } from "../App";
+import type { ProfileData } from "../lib/types";
 import CameraCapture from "./CameraCapture";
 
 interface ProfileProps {
@@ -51,6 +51,13 @@ function Profile({ user, profile, onProfileChange }: ProfileProps) {
   async function handleAvatarChange(file: File) {
     setError(null);
     setInfo(null);
+
+    const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+    if (file.size > MAX_AVATAR_BYTES) {
+      setError("La imagen supera el máximo de 5 MB.");
+      return;
+    }
+
     setUploading(true);
 
     try {
@@ -181,6 +188,8 @@ function Profile({ user, profile, onProfileChange }: ProfileProps) {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             maxLength={20}
+            pattern="[+0-9 ()\-]{6,20}"
+            title="Solo dígitos, espacios y los símbolos + ( ) -"
           />
         </div>
         <button type="submit" disabled={saving}>

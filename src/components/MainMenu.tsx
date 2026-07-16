@@ -1,5 +1,5 @@
 import { User } from "@supabase/supabase-js";
-import { ProfileData } from "../App";
+import type { ProfileData } from "../lib/types";
 
 interface MainMenuProps {
   user: User;

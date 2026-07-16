@@ -1,18 +1,13 @@
 import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
+import type { ProfileData } from "./lib/types";
 import Auth from "./components/Auth";
 import Profile from "./components/Profile";
 import MainMenu from "./components/MainMenu";
 import "./App.css";
 
 type View = "menu" | "profile";
-
-export interface ProfileData {
-  displayName: string;
-  phone: string;
-  avatarUrl: string | null;
-}
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);

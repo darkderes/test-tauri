@@ -14,11 +14,14 @@
       {
         "title": "test-tauri",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "minWidth": 400,
+        "minHeight": 500
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://*.supabase.co data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'",
+      "devCsp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' https://*.supabase.co data: blob:; media-src 'self' blob:; connect-src 'self' ws://localhost:1420 http://localhost:1420 https://*.supabase.co wss://*.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'"
     }
   },
   "bundle": {

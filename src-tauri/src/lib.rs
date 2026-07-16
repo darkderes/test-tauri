@@ -1,17 +1,10 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
         .setup(|app| {
             // WebKitGTK ships with getUserMedia disabled; enable it and
-            // auto-approve camera/mic permission requests from the webview.
+            // ask the user before granting camera/mic access to the webview.
             #[cfg(target_os = "linux")]
             {
                 use tauri::Manager;
@@ -33,7 +26,11 @@ pub fn run() {
                                 .downcast_ref::<UserMediaPermissionRequest>()
                                 .is_some()
                             {
-                                request.allow();
+                                if ask_media_permission() {
+                                    request.allow();
+                                } else {
+                                    request.deny();
+                                }
                                 true
                             } else {
                                 false
@@ -46,4 +43,23 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+/// Shows a modal native dialog asking the user to approve camera/microphone
+/// access. Returns true only if the user explicitly accepts.
+#[cfg(target_os = "linux")]
+fn ask_media_permission() -> bool {
+    use gtk::prelude::{DialogExt, GtkWindowExt};
+
+    let dialog = gtk::MessageDialog::new(
+        None::<&gtk::Window>,
+        gtk::DialogFlags::MODAL,
+        gtk::MessageType::Question,
+        gtk::ButtonsType::YesNo,
+        "¿Permitir que la aplicación acceda a la cámara y al micrófono?",
+    );
+    dialog.set_keep_above(true);
+    let response = dialog.run();
+    dialog.close();
+    response == gtk::ResponseType::Yes
 }
