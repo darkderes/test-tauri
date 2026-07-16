@@ -32,7 +32,6 @@ function Profile({ user, profile, onProfileChange }: ProfileProps) {
         id: user.id,
         display_name: displayName || null,
         phone: phone || null,
-        updated_at: new Date().toISOString(),
       });
 
       if (error) {
@@ -82,7 +81,6 @@ function Profile({ user, profile, onProfileChange }: ProfileProps) {
       const { error: updateError } = await supabase.from("profiles").upsert({
         id: user.id,
         avatar_url: freshUrl,
-        updated_at: new Date().toISOString(),
       });
 
       if (updateError) {
