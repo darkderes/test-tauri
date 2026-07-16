@@ -1,17 +1,19 @@
-import { useEffect, useRef, useState, FormEvent } from "react";
+import { useRef, useState, FormEvent } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { ProfileData } from "../App";
 import CameraCapture from "./CameraCapture";
 
 interface ProfileProps {
   user: User;
+  profile: ProfileData;
+  onProfileChange: (profile: ProfileData) => void;
 }
 
-function Profile({ user }: ProfileProps) {
-  const [displayName, setDisplayName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+function Profile({ user, profile, onProfileChange }: ProfileProps) {
+  const [displayName, setDisplayName] = useState(profile.displayName);
+  const [phone, setPhone] = useState(profile.phone);
+  const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,43 +21,31 @@ function Profile({ user }: ProfileProps) {
   const [showCamera, setShowCamera] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    supabase
-      .from("profiles")
-      .select("display_name, phone, avatar_url")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (error) {
-          setError(error.message);
-        } else if (data) {
-          setDisplayName(data.display_name ?? "");
-          setPhone(data.phone ?? "");
-          setAvatarUrl(data.avatar_url);
-        }
-        setLoading(false);
-      });
-  }, [user.id]);
-
   async function handleSave(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setInfo(null);
     setSaving(true);
 
-    const { error } = await supabase.from("profiles").upsert({
-      id: user.id,
-      display_name: displayName || null,
-      phone: phone || null,
-      updated_at: new Date().toISOString(),
-    });
+    try {
+      const { error } = await supabase.from("profiles").upsert({
+        id: user.id,
+        display_name: displayName || null,
+        phone: phone || null,
+        updated_at: new Date().toISOString(),
+      });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      setInfo("Perfil guardado.");
+      if (error) {
+        setError(error.message);
+      } else {
+        setInfo("Perfil guardado.");
+        onProfileChange({ displayName, phone, avatarUrl });
+      }
+    } catch {
+      setError("Error de red. Intenta de nuevo.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   async function handleAvatarChange(file: File) {
@@ -93,14 +83,13 @@ function Profile({ user }: ProfileProps) {
       } else {
         setAvatarUrl(freshUrl);
         setInfo("Foto actualizada.");
+        onProfileChange({ displayName, phone, avatarUrl: freshUrl });
       }
+    } catch {
+      setError("Error de red. Intenta de nuevo.");
     } finally {
       setUploading(false);
     }
-  }
-
-  if (loading) {
-    return <p>Cargando perfil...</p>;
   }
 
   return (
@@ -109,7 +98,11 @@ function Profile({ user }: ProfileProps) {
 
       <div className="avatar-section">
         {avatarUrl ? (
-          <img src={avatarUrl} alt="Avatar" className="avatar" />
+          <img
+            src={avatarUrl}
+            alt={displayName || "Avatar del usuario"}
+            className="avatar"
+          />
         ) : (
           <div className="avatar avatar-placeholder">
             {(displayName || user.email || "?").charAt(0).toUpperCase()}
@@ -128,7 +121,23 @@ function Profile({ user }: ProfileProps) {
             disabled={uploading || showCamera}
             onClick={() => setShowCamera(true)}
           >
-            📷 Usar cámara
+            <svg
+              className="icon"
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+              <circle cx="12" cy="13" r="3" />
+            </svg>
+            Usar cámara
           </button>
         </div>
         {showCamera && (
@@ -154,27 +163,41 @@ function Profile({ user }: ProfileProps) {
       </div>
 
       <form className="auth-form" onSubmit={handleSave}>
-        <input
-          type="text"
-          placeholder="Nombre para mostrar"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          maxLength={80}
-        />
-        <input
-          type="tel"
-          placeholder="Teléfono"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          maxLength={20}
-        />
+        <div className="field">
+          <label htmlFor="profile-name">Nombre para mostrar</label>
+          <input
+            id="profile-name"
+            type="text"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            maxLength={80}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="profile-phone">Teléfono</label>
+          <input
+            id="profile-phone"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            maxLength={20}
+          />
+        </div>
         <button type="submit" disabled={saving}>
           {saving ? "Guardando..." : "Guardar"}
         </button>
       </form>
 
-      {error && <p className="auth-error">{error}</p>}
-      {info && <p className="auth-info">{info}</p>}
+      {error && (
+        <p className="auth-error" role="alert">
+          {error}
+        </p>
+      )}
+      {info && (
+        <p className="auth-info" role="status">
+          {info}
+        </p>
+      )}
     </div>
   );
 }

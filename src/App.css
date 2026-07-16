@@ -23,12 +23,28 @@
 
 .container {
   margin: 0;
-  padding-top: 10vh;
+  padding: 10vh 1rem 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+}
+
+.spinner {
+  width: 2em;
+  height: 2em;
+  margin: 2em auto;
+  border: 3px solid rgba(100, 108, 255, 0.25);
+  border-top-color: #646cff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .badge {
@@ -86,6 +102,23 @@
   display: flex;
   flex-direction: column;
   gap: 0.75em;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  text-align: left;
+}
+
+.field label {
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+.icon {
+  vertical-align: -0.125em;
+  margin-right: 0.4em;
 }
 
 .auth-error {
@@ -268,13 +301,39 @@ button:active {
   background-color: #e8e8e8;
 }
 
-input,
-button {
-  outline: none;
+input:focus-visible,
+button:focus-visible {
+  outline: 2px solid #646cff;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:disabled:hover {
+  border-color: transparent;
 }
 
 #greet-input {
   margin-right: 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .spinner {
+    animation: none;
+    border-color: #646cff;
+    opacity: 0.5;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -314,5 +373,18 @@ button {
   .auth-switch {
     background: none;
     color: #24c8db;
+  }
+
+  .auth-error {
+    color: #ff6b6b;
+  }
+
+  .auth-info {
+    color: #4ade80;
+  }
+
+  input:focus-visible,
+  button:focus-visible {
+    outline-color: #24c8db;
   }
 }

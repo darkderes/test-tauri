@@ -1,43 +1,23 @@
-import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
-import { supabase } from "../lib/supabase";
+import { ProfileData } from "../App";
 
 interface MainMenuProps {
   user: User;
+  profile: ProfileData;
   onEditProfile: () => void;
 }
 
-function MainMenu({ user, onEditProfile }: MainMenuProps) {
-  const [displayName, setDisplayName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    supabase
-      .from("profiles")
-      .select("display_name, avatar_url")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (error) {
-          setError(error.message);
-        } else if (data) {
-          setDisplayName(data.display_name ?? "");
-          setAvatarUrl(data.avatar_url);
-        }
-        setLoading(false);
-      });
-  }, [user.id]);
-
-  if (loading) {
-    return <p>Cargando...</p>;
-  }
+function MainMenu({ user, profile, onEditProfile }: MainMenuProps) {
+  const { displayName, avatarUrl } = profile;
 
   return (
     <div className="main-menu">
       {avatarUrl ? (
-        <img src={avatarUrl} alt="Avatar" className="avatar" />
+        <img
+          src={avatarUrl}
+          alt={displayName || "Avatar del usuario"}
+          className="avatar"
+        />
       ) : (
         <div className="avatar avatar-placeholder">
           {(displayName || user.email || "?").charAt(0).toUpperCase()}
@@ -50,8 +30,6 @@ function MainMenu({ user, onEditProfile }: MainMenuProps) {
           Editar perfil
         </button>
       </nav>
-
-      {error && <p className="auth-error">{error}</p>}
     </div>
   );
 }

@@ -35,6 +35,32 @@ function Auth() {
           setInfo("Revisa tu correo para confirmar la cuenta.");
         }
       }
+    } catch {
+      setError("Error de red. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleForgotPassword() {
+    setError(null);
+    setInfo(null);
+
+    if (!email) {
+      setError("Escribe tu correo primero.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) {
+        setError(error.message);
+      } else {
+        setInfo("Revisa tu correo para restablecer la contraseña.");
+      }
+    } catch {
+      setError("Error de red. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -44,23 +70,29 @@ function Auth() {
     <div className="auth-card">
       <h2>{mode === "login" ? "Iniciar sesión" : "Crear cuenta"}</h2>
       <form className="auth-form" onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="Correo electrónico"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          autoComplete="email"
-        />
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-          autoComplete={mode === "login" ? "current-password" : "new-password"}
-        />
+        <div className="field">
+          <label htmlFor="auth-email">Correo electrónico</label>
+          <input
+            id="auth-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="auth-password">Contraseña</label>
+          <input
+            id="auth-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
+          />
+        </div>
         <button type="submit" disabled={loading}>
           {loading
             ? "Cargando..."
@@ -70,8 +102,27 @@ function Auth() {
         </button>
       </form>
 
-      {error && <p className="auth-error">{error}</p>}
-      {info && <p className="auth-info">{info}</p>}
+      {error && (
+        <p className="auth-error" role="alert">
+          {error}
+        </p>
+      )}
+      {info && (
+        <p className="auth-info" role="status">
+          {info}
+        </p>
+      )}
+
+      {mode === "login" && (
+        <button
+          type="button"
+          className="auth-switch"
+          disabled={loading}
+          onClick={handleForgotPassword}
+        >
+          ¿Olvidaste tu contraseña?
+        </button>
+      )}
 
       <button
         type="button"

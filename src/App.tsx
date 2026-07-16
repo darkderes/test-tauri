@@ -8,10 +8,18 @@ import "./App.css";
 
 type View = "menu" | "profile";
 
+export interface ProfileData {
+  displayName: string;
+  phone: string;
+  avatarUrl: string | null;
+}
+
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>("menu");
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -28,15 +36,40 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (loading) {
-    return (
-      <main className="container">
-        <p>Cargando...</p>
-      </main>
-    );
-  }
+  const userId = session?.user.id;
 
-  if (!session) {
+  useEffect(() => {
+    if (!userId) {
+      setProfile(null);
+      setProfileError(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    supabase
+      .from("profiles")
+      .select("display_name, phone, avatar_url")
+      .eq("id", userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          setProfileError(error.message);
+        }
+        setProfile({
+          displayName: data?.display_name ?? "",
+          phone: data?.phone ?? "",
+          avatarUrl: data?.avatar_url ?? null,
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  if (!loading && !session) {
     return (
       <main className="container">
         <span className="badge">App de prueba</span>
@@ -46,18 +79,40 @@ function App() {
     );
   }
 
+  if (loading || !session || !profile) {
+    return (
+      <main className="container">
+        <div className="spinner" role="status" aria-label="Cargando" />
+      </main>
+    );
+  }
+
   return (
     <main className="container">
       <span className="badge">App de prueba</span>
 
+      {profileError && (
+        <p className="auth-error" role="alert">
+          {profileError}
+        </p>
+      )}
+
       {view === "menu" ? (
-        <MainMenu user={session.user} onEditProfile={() => setView("profile")} />
+        <MainMenu
+          user={session.user}
+          profile={profile}
+          onEditProfile={() => setView("profile")}
+        />
       ) : (
         <>
           <button className="back-button" onClick={() => setView("menu")}>
             ← Volver al menú
           </button>
-          <Profile user={session.user} />
+          <Profile
+            user={session.user}
+            profile={profile}
+            onProfileChange={setProfile}
+          />
         </>
       )}
 
